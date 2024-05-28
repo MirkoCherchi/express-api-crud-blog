@@ -6,6 +6,7 @@ const posts = require("./db/db.json");
 
 app.use(express.static("public"));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send(`<h1>Benvenuto nel mio Blog!</h1>`);

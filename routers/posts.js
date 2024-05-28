@@ -4,6 +4,7 @@ const postController = require("../controllers/posts");
 
 router.get("/", postController.index);
 router.get("/create", postController.create);
+router.post("/", postController.store);
 router.get("/:slug", postController.show);
 router.get("/:slug/download", postController.download);
 

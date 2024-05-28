@@ -1,4 +1,5 @@
 const posts = require("../db/db.json");
+const fs = require("fs");
 const path = require("path");
 
 const index = (req, res) => {
@@ -76,6 +77,30 @@ const create = (req, res) => {
   });
 };
 
+const store = (req, res) => {
+  const { title, slug, image, tags } = req.body;
+  const newPost = {
+    title,
+    slug,
+    image,
+    tags: tags.split(",").map((tag) => tag.trim()),
+  };
+  posts.push(newPost);
+  fs.writeFileSync(
+    path.join(__dirname, "../db/db.json"),
+    JSON.stringify(posts, null, 2)
+  );
+
+  res.format({
+    html: () => {
+      res.redirect(`/posts/${slug}`);
+    },
+    json: () => {
+      res.status(201).json(newPost);
+    },
+  });
+};
+
 const download = (req, res) => {
   const post = posts.find((p) => p.slug === req.params.slug);
   if (post) {
@@ -86,4 +111,4 @@ const download = (req, res) => {
   }
 };
 
-module.exports = { index, show, create, download };
+module.exports = { index, show, create, store, download };
