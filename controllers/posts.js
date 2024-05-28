@@ -1,6 +1,7 @@
-const posts = require("../db/db.json");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
+const slugify = require("slugify");
+let posts = require("../db/db.json");
 
 const index = (req, res) => {
   res.format({
@@ -59,32 +60,42 @@ const show = (req, res) => {
       } else {
         res.status(404).json({
           error: "Not Found",
-          description: `Non esiste una pizza con slug ${slugPostsRequest}`,
+          content: `Non esiste una pizza con slug ${slugPostsRequest}`,
         });
       }
     },
   });
 };
 
-const create = (req, res) => {
-  res.format({
-    html: () => {
-      res.send("<h1>Creazione nuovo post</h1>");
-    },
-    default: () => {
-      res.status(406).send("Not Acceptable");
-    },
-  });
+const createSlug = (title) => {
+  let baseSlug = slugify(title, { lower: true, strict: true });
+  const slugs = posts.map((p) => p.slug);
+  let counter = 1;
+  let slug = baseSlug;
+  while (slugs.includes(slug)) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+  return slug;
 };
 
-const store = (req, res) => {
-  const { title, slug, image, tags } = req.body;
+const create = (req, res) => {
+  const { title, content, image, tags } = req.body;
+
+  if (!title || !content || !image || !tags) {
+    return res.status(400).send("Dati mancanti.");
+  }
+
+  const slug = createSlug(title);
+
   const newPost = {
     title,
     slug,
+    content,
     image,
     tags: tags.split(",").map((tag) => tag.trim()),
   };
+
   posts.push(newPost);
   fs.writeFileSync(
     path.join(__dirname, "../db/db.json"),
@@ -92,13 +103,32 @@ const store = (req, res) => {
   );
 
   res.format({
-    html: () => {
-      res.redirect(`/posts/${slug}`);
-    },
-    json: () => {
-      res.status(201).json(newPost);
-    },
+    html: () => res.redirect(`/posts/${slug}`),
+    json: () => res.status(201).json({ ...newPost, slug }), // Includi lo slug nella risposta JSON
   });
+};
+
+const destroy = (req, res) => {
+  const slug = req.params.slug;
+  const postIndex = posts.findIndex((p) => p.slug === slug);
+
+  if (postIndex !== -1) {
+    posts.splice(postIndex, 1);
+    fs.writeFileSync(
+      path.join(__dirname, "../db/db.json"),
+      JSON.stringify(posts, null, 2)
+    );
+
+    res.format({
+      html: () => res.redirect("/posts"),
+      json: () => res.send("Post eliminato"),
+    });
+  } else {
+    res.status(404).format({
+      html: () => res.send("<h1>Post non trovato</h1>"),
+      json: () => res.json({ error: "Post non trovato" }),
+    });
+  }
 };
 
 const download = (req, res) => {
@@ -111,4 +141,4 @@ const download = (req, res) => {
   }
 };
 
-module.exports = { index, show, create, store, download };
+module.exports = { index, show, create, destroy, download };

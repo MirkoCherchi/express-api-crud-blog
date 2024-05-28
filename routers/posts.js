@@ -3,9 +3,9 @@ const router = express.Router();
 const postController = require("../controllers/posts");
 
 router.get("/", postController.index);
-router.get("/create", postController.create);
-router.post("/", postController.store);
+router.post("/", postController.create);
 router.get("/:slug", postController.show);
 router.get("/:slug/download", postController.download);
+router.delete("/:slug", postController.destroy);
 
 module.exports = router;
