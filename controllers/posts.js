@@ -80,9 +80,10 @@ const createSlug = (title) => {
 };
 
 const create = (req, res) => {
-  const { title, content, image, tags } = req.body;
+  const { title, content, tags } = req.body;
+  const image = req.file.filename;
 
-  if (!title || !content || !image || !tags) {
+  if (!title || !content || !tags || !image) {
     return res.status(400).send("Dati mancanti.");
   }
 
@@ -104,7 +105,7 @@ const create = (req, res) => {
 
   res.format({
     html: () => res.redirect(`/posts/${slug}`),
-    json: () => res.status(201).json({ ...newPost, slug }), // Includi lo slug nella risposta JSON
+    json: () => res.status(201).json({ ...newPost, slug }),
   });
 };
 
@@ -113,11 +114,14 @@ const destroy = (req, res) => {
   const postIndex = posts.findIndex((p) => p.slug === slug);
 
   if (postIndex !== -1) {
-    posts.splice(postIndex, 1);
+    const deletedPost = posts.splice(postIndex, 1)[0];
     fs.writeFileSync(
       path.join(__dirname, "../db/db.json"),
       JSON.stringify(posts, null, 2)
     );
+
+    const imageName = deletedPost.image;
+    deletePublicImage(imageName);
 
     res.format({
       html: () => res.redirect("/posts"),
@@ -129,6 +133,17 @@ const destroy = (req, res) => {
       json: () => res.json({ error: "Post non trovato" }),
     });
   }
+};
+
+const updatePosts = (newPosts) => {
+  const filePath = path.join(__dirname, "../db/db.json");
+  fs.writeFileSync(filePath, JSON.stringify(newPosts, null, 2));
+  posts = newPosts;
+};
+
+const deletePublicImage = (imageName) => {
+  const imagePath = path.join(__dirname, "../public", imageName);
+  fs.unlinkSync(imagePath);
 };
 
 const download = (req, res) => {

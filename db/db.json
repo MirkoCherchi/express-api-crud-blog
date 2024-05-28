@@ -56,5 +56,16 @@
       "Ricette vegetariane",
       "Ricette al forno"
     ]
+  },
+  {
+    "title": "nuovo post",
+    "slug": "nuovo-post",
+    "content": "contenuto nuovo post",
+    "image": "332b6d196248343dc2084eec3a6dab2b",
+    "tags": [
+      "prova",
+      "nuovo post",
+      "creato"
+    ]
   }
 ]
